@@ -5,6 +5,7 @@ author:
 build_requires:
   Test::More: 0.88
 configure_requires:
+  Devel::CallChecker: 0
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
 generated_by: 'Dist::Zilla version 4.200008, CPAN::Meta::Converter version 2.110440'
@@ -14,10 +15,11 @@ meta-spec:
   version: 1.4
 name: smartmatch-engine-core
 requires:
-  smartmatch: 0
+  Devel::CallChecker: 0
+  smartmatch: 0.03
 resources:
   repository: git://github.com/doy/smartmatch-engine-core.git
-version: 0.01
+version: 0.02
 x_Dist_Zilla:
   plugins:
     -
@@ -63,10 +65,6 @@ x_Dist_Zilla:
     -
       class: Dist::Zilla::Plugin::ShareDir
       name: '@Filter/ShareDir'
-      version: 4.200008
-    -
-      class: Dist::Zilla::Plugin::MakeMaker
-      name: '@Filter/MakeMaker'
       version: 4.200008
     -
       class: Dist::Zilla::Plugin::Manifest
@@ -141,12 +139,24 @@ x_Dist_Zilla:
       name: '@Filter/UploadToCPAN'
       version: 4.200008
     -
+      class: inc::MakeMaker
+      name: '=inc::MakeMaker'
+      version: ~
+    -
       class: Dist::Zilla::Plugin::Prereqs
       config:
         Dist::Zilla::Plugin::Prereqs:
           phase: runtime
           type: requires
       name: Prereqs
+      version: 4.200008
+    -
+      class: Dist::Zilla::Plugin::Prereqs
+      config:
+        Dist::Zilla::Plugin::Prereqs:
+          phase: configure
+          type: requires
+      name: ConfigureRequires
       version: 4.200008
     -
       class: Dist::Zilla::Plugin::FinderCode

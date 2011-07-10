@@ -1,6 +1,6 @@
 package smartmatch::engine::core;
 BEGIN {
-  $smartmatch::engine::core::VERSION = '0.01'; # TRIAL
+  $smartmatch::engine::core::VERSION = '0.02'; # TRIAL
 }
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use parent 'DynaLoader';
 
 sub dl_load_flags { 0x01 }
 
-if (!$smartmatch::engine::core::USE_PP) {
+if (!$smartmatch::engine::core::USE_PP && $] >= 5.011002) {
     __PACKAGE__->bootstrap(
         # we need to be careful not to touch $VERSION at compile time,
         # otherwise DynaLoader will assume it's set and check against it, which
@@ -22,6 +22,8 @@ if (!$smartmatch::engine::core::USE_PP) {
     );
     init(__PACKAGE__->can('match'));
 }
+
+use Devel::CallChecker;
 
 use B;
 use Carp qw(croak);
@@ -36,7 +38,10 @@ sub type {
     if (!defined($thing)) {
         return 'undef';
     }
-    elsif (blessed($thing) && reftype($thing) ne 'REGEXP') {
+    elsif (re::is_regexp($thing)) {
+        return 'Regex';
+    }
+    elsif (blessed($thing)) {
         return 'Object';
     }
     elsif (my $reftype = reftype($thing)) {
@@ -45,9 +50,6 @@ sub type {
         }
         elsif ($reftype eq 'HASH') {
             return 'Hash';
-        }
-        elsif ($reftype eq 'REGEXP') {
-            return 'Regex';
         }
         elsif ($reftype eq 'CODE') {
             return 'CodeRef';
@@ -74,10 +76,13 @@ sub type {
 sub match {
     my ($a, $b, $seen) = @_;
 
-    if (type($b) eq 'undef') {
+    my $type_a = type($a);
+    my $type_b = type($b);
+
+    if ($type_b eq 'undef') {
         return !defined($a);
     }
-    elsif (type($b) eq 'Object') {
+    elsif ($type_b eq 'Object') {
         my $overload = overload::Method($b, '~~');
 
         # XXX this is buggy behavior and may be changed
@@ -92,19 +97,19 @@ sub match {
             unless $overload;
         return $b->$overload($a, 1);
     }
-    elsif (type($b) eq 'CodeRef') {
-        if (type($a) eq 'Hash') {
+    elsif ($type_b eq 'CodeRef') {
+        if ($type_a eq 'Hash') {
             return !grep { !$b->($_) } keys %$a;
         }
-        elsif (type($a) eq 'Array') {
+        elsif ($type_a eq 'Array') {
             return !grep { !$b->($_) } @$a;
         }
         else {
             return $b->($a);
         }
     }
-    elsif (type($b) eq 'Hash') {
-        if (type($a) eq 'Hash') {
+    elsif ($type_b eq 'Hash') {
+        if ($type_a eq 'Hash') {
             my @a = sort keys %$a;
             my @b = sort keys %$b;
             return unless @a == @b;
@@ -113,24 +118,24 @@ sub match {
             }
             return 1;
         }
-        elsif (type($a) eq 'Array') {
+        elsif ($type_a eq 'Array') {
             return grep { exists $b->{$_ // ''} } @$a;
         }
-        elsif (type($a) eq 'Regex') {
+        elsif ($type_a eq 'Regex') {
             return grep /$a/, keys %$b;
         }
-        elsif (type($a) eq 'undef') {
+        elsif ($type_a eq 'undef') {
             return;
         }
         else {
             return exists $b->{$a};
         }
     }
-    elsif (type($b) eq 'Array') {
-        if (type($a) eq 'Hash') {
+    elsif ($type_b eq 'Array') {
+        if ($type_a eq 'Hash') {
             return grep { exists $a->{$_ // ''} } @$b;
         }
-        elsif (type($a) eq 'Array') {
+        elsif ($type_a eq 'Array') {
             return unless @$a == @$b;
             if (!$seen) {
                 $seen = {};
@@ -144,10 +149,10 @@ sub match {
             }
             return 1;
         }
-        elsif (type($a) eq 'Regex') {
+        elsif ($type_a eq 'Regex') {
             return grep /$a/, @$b;
         }
-        elsif (type($a) eq 'undef') {
+        elsif ($type_a eq 'undef') {
             return grep !defined, @$b;
         }
         else {
@@ -163,32 +168,33 @@ sub match {
             } @$b;
         }
     }
-    elsif (type($b) eq 'Regex') {
-        if (type($a) eq 'Hash') {
+    elsif ($type_b eq 'Regex') {
+        if ($type_a eq 'Hash') {
             return grep /$b/, keys %$a;
         }
-        elsif (type($a) eq 'Array') {
+        elsif ($type_a eq 'Array') {
             return grep /$b/, @$a;
         }
         else {
+            no warnings 'uninitialized';
             return $a =~ $b;
         }
     }
-    elsif (type($a) eq 'Object') {
+    elsif ($type_a eq 'Object') {
         my $overload = overload::Method($a, '~~');
         return $a->$overload($b, 0) if $overload;
     }
 
     # XXX perlsyn currently has this undef case after the Num cases, but that's
     # not how it's currently implemented
-    if (type($a) eq 'undef') {
+    if ($type_a eq 'undef') {
         return !defined($b);
     }
-    elsif (type($b) eq 'Num') {
+    elsif ($type_b eq 'Num') {
         no warnings 'uninitialized', 'numeric'; # ugh
         return $a == $b;
     }
-    elsif (type($a) eq 'Num' && type($b) eq 'numish') {
+    elsif ($type_a eq 'Num' && $type_b eq 'numish') {
         return $a == $b;
     }
     else {
@@ -208,7 +214,7 @@ smartmatch::engine::core - default smartmatch implementation from 5.10 - 5.14
 
 =head1 VERSION
 
-version 0.01
+version 0.02
 
 =head1 SYNOPSIS
 

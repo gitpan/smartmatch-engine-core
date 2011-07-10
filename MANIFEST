@@ -7,6 +7,7 @@ Makefile.PL
 README
 core.xs
 dist.ini
+inc/MakeMaker.pm
 lib/smartmatch/engine/core.pm
 ppport.h
 stolen_chunk_of_pp_ctl.c

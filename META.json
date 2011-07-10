@@ -16,12 +16,14 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
+            "Devel::CallChecker" : 0,
             "ExtUtils::MakeMaker" : "6.30"
          }
       },
       "runtime" : {
          "requires" : {
-            "smartmatch" : 0
+            "Devel::CallChecker" : 0,
+            "smartmatch" : "0.03"
          }
       },
       "test" : {
@@ -38,7 +40,7 @@
          "web" : "http://github.com/doy/smartmatch-engine-core"
       }
    },
-   "version" : "0.01",
+   "version" : "0.02",
    "x_Dist_Zilla" : {
       "plugins" : [
          {
@@ -95,11 +97,6 @@
          {
             "class" : "Dist::Zilla::Plugin::ShareDir",
             "name" : "@Filter/ShareDir",
-            "version" : "4.200008"
-         },
-         {
-            "class" : "Dist::Zilla::Plugin::MakeMaker",
-            "name" : "@Filter/MakeMaker",
             "version" : "4.200008"
          },
          {
@@ -193,6 +190,11 @@
             "version" : "4.200008"
          },
          {
+            "class" : "inc::MakeMaker",
+            "name" : "=inc::MakeMaker",
+            "version" : null
+         },
+         {
             "class" : "Dist::Zilla::Plugin::Prereqs",
             "config" : {
                "Dist::Zilla::Plugin::Prereqs" : {
@@ -201,6 +203,17 @@
                }
             },
             "name" : "Prereqs",
+            "version" : "4.200008"
+         },
+         {
+            "class" : "Dist::Zilla::Plugin::Prereqs",
+            "config" : {
+               "Dist::Zilla::Plugin::Prereqs" : {
+                  "phase" : "configure",
+                  "type" : "requires"
+               }
+            },
+            "name" : "ConfigureRequires",
             "version" : "4.200008"
          },
          {
